@@ -10,8 +10,13 @@ from urllib3.util.retry import Retry
 import re
 
 def load_cookies_from_json(file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error loading cookies from {file_path}: {e}")
+        print("Place your krack.ai session cookies in cookies.txt (see README.md)")
+        return {}
 
     cookies = {}
 
@@ -77,7 +82,8 @@ def download_file(url, folder):
 def get_lessons(course_url):
     print("Fetching lessons...")
 
-    r = requests.get(course_url, headers=headers, cookies=cookies)
+    r = session.get(course_url, headers=headers, cookies=cookies)
+    r.raise_for_status()
     soup = BeautifulSoup(r.text, "html.parser")
 
     lessons = []
@@ -110,7 +116,8 @@ def process_lesson(lesson):
     print(f"\nVisiting: {url}")
     print(f"Saving to: {group_name}")
 
-    r = requests.get(url, headers=headers, cookies=cookies)
+    r = session.get(url, headers=headers, cookies=cookies)
+    r.raise_for_status()
     soup = BeautifulSoup(r.text, "html.parser")
 
     group_folder = os.path.join(DOWNLOAD_DIR, group_name)
